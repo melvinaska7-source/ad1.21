@@ -1,0 +1,52 @@
+# ==========================================
+#             DailyArtifacts items.yml
+# ==========================================
+# Список ВСЕХ возможных артефактов, из которых плагин каждый период
+# случайно выбирает от artifact-count.min до artifact-count.max уникальных штук.
+#
+# enabled: true/false настраивается ТОЛЬКО здесь (не через GUI).
+#   false — предмет остаётся в файле, но не участвует в случайном выборе.
+#
+# material — ТОЛЬКО ванильные Bukkit Material (без модов/ItemsAdder/Oraxen).
+# price — цена за 1 штуку.
+# limit — сколько штук максимум может сдать один игрок за период.
+#
+# Добавлять новые предметы можно и через /ad settings (Shift+ЛКМ по предмету
+# в своём инвентаре), это автоматически допишет их сюда.
+
+items:
+  brick:
+    enabled: true
+    material: BRICK
+    price: 100
+    limit: 16
+
+  diamond:
+    enabled: true
+    material: DIAMOND
+    price: 50
+    limit: 32
+
+  emerald:
+    enabled: true
+    material: EMERALD
+    price: 40
+    limit: 24
+
+  gold_ingot:
+    enabled: true
+    material: GOLD_INGOT
+    price: 25
+    limit: 32
+
+  iron_ingot:
+    enabled: true
+    material: IRON_INGOT
+    price: 10
+    limit: 64
+
+  nether_star:
+    enabled: false
+    material: NETHER_STAR
+    price: 5000
+    limit: 1

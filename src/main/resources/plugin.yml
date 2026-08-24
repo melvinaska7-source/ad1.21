@@ -1,0 +1,25 @@
+name: DailyArtifacts
+version: '1.0.0'
+main: com.melviavas.dailyartifacts.DailyArtifactsPlugin
+api-version: '1.21'
+author: melviavas
+description: Ежедневные артефакты — сдавай ванильные предметы за игровую валюту.
+
+softdepend: [Vault, PlaceholderAPI, PermissionsEx, LuckPerms]
+
+commands:
+  dailyartifacts:
+    description: Основная команда плагина DailyArtifacts
+    aliases: [ad]
+    usage: /ad <menu|settings|reload>
+
+permissions:
+  dailyartifacts.menu:
+    description: Доступ к /ad menu
+    default: true
+  dailyartifacts.settings:
+    description: Доступ к /ad settings
+    default: op
+  dailyartifacts.reload:
+    description: Доступ к /ad reload
+    default: op
