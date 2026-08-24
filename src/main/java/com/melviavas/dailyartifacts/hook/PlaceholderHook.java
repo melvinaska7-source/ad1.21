@@ -42,7 +42,7 @@ public class PlaceholderHook extends PlaceholderExpansion {
     }
 
     @Override
-    public String onPlaceholder(OfflinePlayer player, @NotNull String params) {
+    public String onRequest(OfflinePlayer player, @NotNull String params) {
         if (params.equalsIgnoreCase("time_left")) {
             return TimeUtil.formatRemaining(
                     plugin.getArtifactManager().getMillisUntilNextUpdate(),
