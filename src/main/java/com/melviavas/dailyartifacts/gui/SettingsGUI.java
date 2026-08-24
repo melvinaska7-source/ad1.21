@@ -59,9 +59,9 @@ public class SettingsGUI {
             slot++;
         }
 
-        placeButton(inv, c, "save", Material.LIME_DYE);
-        placeButton(inv, c, "reset", Material.BARRIER);
-        placeButton(inv, c, "help", Material.BOOK);
+        placeLootButton(inv, c, "save", Material.LIME_DYE);
+        placeLootButton(inv, c, "reset", Material.BARRIER);
+        placeLootButton(inv, c, "help", Material.BOOK);
         return inv;
     }
 
@@ -113,6 +113,17 @@ public class SettingsGUI {
                         "&8ЛКМ — изменить через чат"
                 )).build());
         return inv;
+    }
+
+    private void placeLootButton(Inventory inv, FileConfiguration c, String key, Material fallback) {
+        String base = "settings-menu.loot-buttons." + key;
+        int slot = c.getInt(base + ".slot", -1);
+        if (slot < 0 || slot >= inv.getSize()) return;
+        Material material = Material.matchMaterial(c.getString(base + ".material", fallback.name()));
+        if (material == null) material = fallback;
+        String name = c.getString(base + ".name", key);
+        List<String> lore = c.getStringList(base + ".lore");
+        inv.setItem(slot, new ItemBuilder(material).name(name).lore(lore).build());
     }
 
     private void placeButton(Inventory inv, FileConfiguration c, String key, Material fallback) {

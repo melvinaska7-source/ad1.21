@@ -263,6 +263,6 @@ public class MenuListener implements Listener {
 
     private boolean isButtonSlot(int slot, String key) {
         return plugin.getConfigManager().getMenu()
-                .getInt("settings-menu.buttons." + key + ".slot", -1) == slot;
+                .getInt("settings-menu.loot-buttons." + key + ".slot", -1) == slot;
     }
 }

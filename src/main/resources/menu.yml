@@ -102,7 +102,7 @@ settings-menu:
       name: "&e&lМаксимальное количество"
 
   # Кнопки именно меню настройки лута.
-  buttons:
+  loot-buttons:
     save:
       slot: 45
       material: LIME_DYE
