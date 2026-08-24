@@ -1,6 +1,7 @@
 package com.melviavas.dailyartifacts.listener;
 
 import com.melviavas.dailyartifacts.DailyArtifactsPlugin;
+import com.melviavas.dailyartifacts.manager.ChatInputManager;
 import com.melviavas.dailyartifacts.model.ArtifactItem;
 import com.melviavas.dailyartifacts.util.ColorUtil;
 import org.bukkit.Material;
@@ -24,19 +25,30 @@ public class MenuListener implements Listener {
     public void onClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player player)) return;
 
-        String menuTitle = ColorUtil.colorize(plugin.getConfigManager().getMenu().getString("menu.title", ""));
-        String settingsTitle = ColorUtil.colorize(plugin.getConfigManager().getMenu().getString("settings-menu.title", ""));
+        var menu = plugin.getConfigManager().getMenu();
+        String mainTitle = ColorUtil.colorize(menu.getString("menu.title", ""));
+        String settingsTitle = ColorUtil.colorize(menu.getString("settings-menu.title", ""));
+        String lootTitle = ColorUtil.colorize(menu.getString("settings-menu.loot-title", ""));
+        String updateTitle = ColorUtil.colorize(menu.getString("settings-menu.update-title", ""));
+        String countTitle = ColorUtil.colorize(menu.getString("settings-menu.count-title", ""));
         String viewTitle = event.getView().getTitle();
 
-        if (viewTitle.equals(menuTitle)) {
+        if (viewTitle.equals(mainTitle)) {
             event.setCancelled(true);
             handleMainMenuClick(player, event);
         } else if (viewTitle.equals(settingsTitle)) {
-            handleSettingsClick(player, event);
+            event.setCancelled(true);
+            handleSettingsRoot(player, event);
+        } else if (viewTitle.equals(lootTitle)) {
+            handleLootSettings(player, event);
+        } else if (viewTitle.equals(updateTitle)) {
+            event.setCancelled(true);
+            handleUpdateSettings(player, event);
+        } else if (viewTitle.equals(countTitle)) {
+            event.setCancelled(true);
+            handleCountSettings(player, event);
         }
     }
-
-    // ---------- главное меню сдачи предметов ----------
 
     private void handleMainMenuClick(Player player, InventoryClickEvent event) {
         ItemStack clicked = event.getCurrentItem();
@@ -52,7 +64,10 @@ public class MenuListener implements Listener {
         if (match == null) return;
 
         int toTurnIn = event.isShiftClick() ? countInInventory(player, match.getMaterial()) : 1;
-        if (toTurnIn <= 0) return;
+        if (toTurnIn <= 0) {
+            player.sendMessage(plugin.getConfigManager().msg("not-enough-items"));
+            return;
+        }
 
         turnIn(player, match, toTurnIn);
     }
@@ -91,7 +106,6 @@ public class MenuListener implements Listener {
                 .replace("{price}", trim(total)));
         playSound(player, "success");
 
-        player.closeInventory();
         player.openInventory(plugin.getArtifactMenuGUI().build(player));
     }
 
@@ -138,14 +152,52 @@ public class MenuListener implements Listener {
         return v == Math.floor(v) ? String.valueOf((long) v) : String.valueOf(v);
     }
 
-    // ---------- меню настроек ----------
+    private void handleSettingsRoot(Player player, InventoryClickEvent event) {
+        int slot = event.getSlot();
+        if (slot == buttonSlot("loot")) {
+            player.openInventory(plugin.getSettingsGUI().buildLoot(player));
+        } else if (slot == buttonSlot("update")) {
+            player.openInventory(plugin.getSettingsGUI().buildUpdate(player));
+        } else if (slot == buttonSlot("count")) {
+            player.openInventory(plugin.getSettingsGUI().buildCount(player));
+        }
+    }
 
-    private void handleSettingsClick(Player player, InventoryClickEvent event) {
+    private void handleUpdateSettings(Player player, InventoryClickEvent event) {
+        int slot = event.getSlot();
+        if (slot == plugin.getConfigManager().getMenu().getInt("settings-menu.update-buttons.min.slot", 11)) {
+            plugin.getChatInputManager().request(player.getUniqueId(), ChatInputManager.Type.UPDATE_MIN);
+            player.closeInventory();
+            player.sendMessage(plugin.getConfigManager().msg("enter-update-time-prompt"));
+        } else if (slot == plugin.getConfigManager().getMenu().getInt("settings-menu.update-buttons.max.slot", 15)) {
+            plugin.getChatInputManager().request(player.getUniqueId(), ChatInputManager.Type.UPDATE_MAX);
+            player.closeInventory();
+            player.sendMessage(plugin.getConfigManager().msg("enter-update-time-prompt"));
+        }
+    }
+
+    private void handleCountSettings(Player player, InventoryClickEvent event) {
+        int slot = event.getSlot();
+        if (slot == plugin.getConfigManager().getMenu().getInt("settings-menu.count-buttons.min.slot", 11)) {
+            plugin.getChatInputManager().request(player.getUniqueId(), ChatInputManager.Type.COUNT_MIN);
+            player.closeInventory();
+            player.sendMessage(plugin.getConfigManager().msg("enter-count-prompt"));
+        } else if (slot == plugin.getConfigManager().getMenu().getInt("settings-menu.count-buttons.max.slot", 15)) {
+            plugin.getChatInputManager().request(player.getUniqueId(), ChatInputManager.Type.COUNT_MAX);
+            player.closeInventory();
+            player.sendMessage(plugin.getConfigManager().msg("enter-count-prompt"));
+        }
+    }
+
+    private int buttonSlot(String key) {
+        return plugin.getConfigManager().getMenu().getInt("settings-menu.buttons." + key + ".slot", -1);
+    }
+
+    private void handleLootSettings(Player player, InventoryClickEvent event) {
         boolean topInventory = event.getClickedInventory() != null
                 && event.getClickedInventory().equals(event.getView().getTopInventory());
 
         if (!topInventory) {
-            // клик по СВОЕМУ инвентарю, пока открыто /ad settings
             if (event.isShiftClick() && event.getClick() == ClickType.SHIFT_LEFT) {
                 ItemStack clicked = event.getCurrentItem();
                 if (clicked == null || clicked.getType() == Material.AIR) return;
@@ -157,7 +209,7 @@ public class MenuListener implements Listener {
 
                 plugin.getArtifactManager().addOrUpdateItem(id, clicked.getType(), defaultPrice, defaultLimit);
                 player.sendMessage(plugin.getConfigManager().msg("item-added"));
-                player.openInventory(plugin.getSettingsGUI().build(player));
+                player.openInventory(plugin.getSettingsGUI().buildLoot(player));
             }
             return;
         }
@@ -178,12 +230,10 @@ public class MenuListener implements Listener {
                 plugin.getArtifactManager().removeItem(id);
             }
             player.sendMessage(plugin.getConfigManager().msg("settings-reset"));
-            player.openInventory(plugin.getSettingsGUI().build(player));
+            player.openInventory(plugin.getSettingsGUI().buildLoot(player));
             return;
         }
-        if (isButtonSlot(slot, "help")) {
-            return;
-        }
+        if (isButtonSlot(slot, "help")) return;
 
         String id = plugin.getSettingsGUI().getIdForSlot(slot);
         if (id == null) return;
@@ -195,7 +245,7 @@ public class MenuListener implements Listener {
         if (click == ClickType.SHIFT_LEFT) {
             plugin.getArtifactManager().removeItem(id);
             player.sendMessage(plugin.getConfigManager().msg("item-removed"));
-            player.openInventory(plugin.getSettingsGUI().build(player));
+            player.openInventory(plugin.getSettingsGUI().buildLoot(player));
         } else if (click == ClickType.SHIFT_RIGHT) {
             plugin.getChatInputManager().requestPrice(player.getUniqueId(), id);
             player.closeInventory();
@@ -203,16 +253,16 @@ public class MenuListener implements Listener {
         } else if (click == ClickType.LEFT) {
             item.setLimit(item.getLimit() + 1);
             plugin.getArtifactManager().addOrUpdateItem(id, item.getMaterial(), item.getPrice(), item.getLimit());
-            player.openInventory(plugin.getSettingsGUI().build(player));
+            player.openInventory(plugin.getSettingsGUI().buildLoot(player));
         } else if (click == ClickType.RIGHT) {
             item.setLimit(Math.max(0, item.getLimit() - 1));
             plugin.getArtifactManager().addOrUpdateItem(id, item.getMaterial(), item.getPrice(), item.getLimit());
-            player.openInventory(plugin.getSettingsGUI().build(player));
+            player.openInventory(plugin.getSettingsGUI().buildLoot(player));
         }
     }
 
     private boolean isButtonSlot(int slot, String key) {
-        int configured = plugin.getConfigManager().getMenu().getInt("settings-menu.buttons." + key + ".slot", -1);
-        return configured == slot;
+        return plugin.getConfigManager().getMenu()
+                .getInt("settings-menu.buttons." + key + ".slot", -1) == slot;
     }
 }

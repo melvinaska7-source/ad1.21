@@ -4,24 +4,32 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-/** Хранит, каких игроков плагин ждёт с вводом цены в чат (после Shift+ПКМ в /ad settings). */
+/** Хранит ожидаемый ввод значения из чата. */
 public class ChatInputManager {
 
-    private final Map<UUID, String> pendingPriceInput = new HashMap<>();
+    public enum Type { PRICE, UPDATE_MIN, UPDATE_MAX, COUNT_MIN, COUNT_MAX }
+
+    public record Request(Type type, String artifactId) {}
+
+    private final Map<UUID, Request> pending = new HashMap<>();
 
     public void requestPrice(UUID playerId, String artifactId) {
-        pendingPriceInput.put(playerId, artifactId);
+        pending.put(playerId, new Request(Type.PRICE, artifactId));
+    }
+
+    public void request(UUID playerId, Type type) {
+        pending.put(playerId, new Request(type, null));
     }
 
     public boolean isAwaiting(UUID playerId) {
-        return pendingPriceInput.containsKey(playerId);
+        return pending.containsKey(playerId);
     }
 
-    public String consume(UUID playerId) {
-        return pendingPriceInput.remove(playerId);
+    public Request consume(UUID playerId) {
+        return pending.remove(playerId);
     }
 
     public void cancel(UUID playerId) {
-        pendingPriceInput.remove(playerId);
+        pending.remove(playerId);
     }
 }

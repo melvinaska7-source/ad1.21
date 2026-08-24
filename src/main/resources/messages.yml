@@ -5,7 +5,7 @@
 # Плейсхолдеры зависят от конкретного сообщения (указаны в комментарии).
 
 # Префикс, подставляется в {prefix} везде ниже. Пока экспериментальный — меняй как хочешь.
-prefix: "&#812162&l[&#7D286A&lD&#793072&lA&#75377A&l]&r "
+prefix: "&#85195A&l[&#812162&lD&#7D286A&la&#793072&li&#75377A&ll&#703F82&ly &#684E92&lA&#64559A&lr&#605DA1&lt&#5C64A9&li&#586CB1&lf&#5473B9&la&#4F7BC1&lc&#4B82C9&lt&#478AD1&ls&r] "
 
 messages:
   no-permission: "{prefix}&cУ тебя нет прав на это."
@@ -29,6 +29,8 @@ messages:
 
   # {value} — введённое игроком значение
   enter-price-prompt: "{prefix}&eНапиши в чат новую цену для этого предмета (число). Напиши &ccancel&e для отмены."
-  enter-limit-prompt: "{prefix}&eПрокрути колёсиком ещё раз или напиши лимит в чат. Напиши &ccancel&e для отмены."
+  enter-limit-prompt: "{prefix}&eНапиши лимит в чат. Напиши &ccancel&e для отмены."
+  enter-update-time-prompt: "{prefix}&eНапиши время, например &f1h&e, &f12h&e или &f7d&e. Напиши &ccancel&e для отмены."
+  enter-count-prompt: "{prefix}&eНапиши количество от &f1 &eдо &f5&e. Напиши &ccancel&e для отмены."
   value-updated: "{prefix}&aЗначение обновлено: &f{value}"
   invalid-number: "{prefix}&cЭто не похоже на число. Попробуй ещё раз."

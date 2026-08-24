@@ -1,6 +1,7 @@
 package com.melviavas.dailyartifacts.listener;
 
 import com.melviavas.dailyartifacts.DailyArtifactsPlugin;
+import com.melviavas.dailyartifacts.manager.ChatInputManager;
 import com.melviavas.dailyartifacts.model.ArtifactItem;
 import io.papermc.paper.event.player.AsyncChatEvent;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
@@ -24,22 +25,46 @@ public class ChatInputListener implements Listener {
         if (!plugin.getChatInputManager().isAwaiting(player.getUniqueId())) return;
 
         event.setCancelled(true);
-        String raw = PlainTextComponentSerializer.plainText().serialize(event.message());
-        String artifactId = plugin.getChatInputManager().consume(player.getUniqueId());
+        String raw = PlainTextComponentSerializer.plainText().serialize(event.message()).trim();
+        ChatInputManager.Request request = plugin.getChatInputManager().consume(player.getUniqueId());
 
         Bukkit.getScheduler().runTask(plugin, () -> {
-            if (raw.equalsIgnoreCase("cancel")) {
-                return;
-            }
+            if (raw.equalsIgnoreCase("cancel")) return;
+
             try {
-                double value = Double.parseDouble(raw.trim().replace(",", "."));
-                ArtifactItem item = plugin.getArtifactManager().getById(artifactId);
-                if (item == null) return;
-                plugin.getArtifactManager().addOrUpdateItem(
-                        artifactId, item.getMaterial(), value, item.getLimit());
-                player.sendMessage(plugin.getConfigManager().msg("value-updated")
-                        .replace("{value}", raw.trim()));
-            } catch (NumberFormatException e) {
+                switch (request.type()) {
+                    case PRICE -> {
+                        double value = Double.parseDouble(raw.replace(",", "."));
+                        if (value < 0) throw new NumberFormatException();
+                        ArtifactItem item = plugin.getArtifactManager().getById(request.artifactId());
+                        if (item == null) return;
+                        plugin.getArtifactManager().addOrUpdateItem(
+                                request.artifactId(), item.getMaterial(), value, item.getLimit());
+                        player.sendMessage(plugin.getConfigManager().msg("value-updated")
+                                .replace("{value}", raw));
+                    }
+                    case UPDATE_MIN, UPDATE_MAX -> {
+                        long millis = com.melviavas.dailyartifacts.util.TimeUtil.parseDuration(raw);
+                        if (millis <= 0) throw new NumberFormatException();
+                        String path = request.type() == ChatInputManager.Type.UPDATE_MIN
+                                ? "update-time.min" : "update-time.max";
+                        plugin.getConfigManager().getConfig().set(path, raw);
+                        plugin.getConfigManager().saveConfig();
+                        player.sendMessage(plugin.getConfigManager().msg("value-updated")
+                                .replace("{value}", raw));
+                    }
+                    case COUNT_MIN, COUNT_MAX -> {
+                        int value = Integer.parseInt(raw);
+                        if (value < 1 || value > 5) throw new NumberFormatException();
+                        String path = request.type() == ChatInputManager.Type.COUNT_MIN
+                                ? "artifact-count.min" : "artifact-count.max";
+                        plugin.getConfigManager().getConfig().set(path, value);
+                        plugin.getConfigManager().saveConfig();
+                        player.sendMessage(plugin.getConfigManager().msg("value-updated")
+                                .replace("{value}", String.valueOf(value)));
+                    }
+                }
+            } catch (NumberFormatException ex) {
                 player.sendMessage(plugin.getConfigManager().msg("invalid-number"));
             }
         });

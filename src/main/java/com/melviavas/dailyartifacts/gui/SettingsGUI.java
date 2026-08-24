@@ -16,19 +16,15 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Показывает весь пул возможных предметов (items.yml) для редактирования.
- * Управление (см. help-кнопку в самом меню):
- *   ЛКМ по предмету        — лимит +1
- *   ПКМ по предмету        — лимит -1
- *   Shift+ЛКМ по предмету  — удалить из пула
- *   Shift+ПКМ по предмету  — ввести новую цену в чат
- *   Shift+ЛКМ по предмету в СВОЁМ инвентаре (пока это меню открыто) — добавить в пул
+ * Два уровня настроек:
+ * 1) корневое /ad settings с тремя разделами;
+ * 2) отдельное меню настройки лута.
+ *
+ * enabled намеренно не редактируется через GUI — только items.yml.
  */
 public class SettingsGUI {
 
     private final DailyArtifactsPlugin plugin;
-
-    // slot -> id предмета, чтобы обработчик клика знал, что нажали
     private final Map<Integer, String> lastSlotMap = new LinkedHashMap<>();
 
     public SettingsGUI(DailyArtifactsPlugin plugin) {
@@ -36,15 +32,26 @@ public class SettingsGUI {
     }
 
     public Inventory build(Player player) {
-        FileConfiguration menuConfig = plugin.getConfigManager().getMenu();
-        String title = ColorUtil.colorize(menuConfig.getString("settings-menu.title", "Настройка артефактов"));
-        int size = menuConfig.getInt("settings-menu.size", 54);
+        FileConfiguration c = plugin.getConfigManager().getMenu();
+        String title = ColorUtil.colorize(c.getString("settings-menu.title", "Настройки Daily Artifacts"));
+        int size = c.getInt("settings-menu.size", 27);
+        Inventory inv = plugin.getServer().createInventory(null, size, title);
 
+        placeButton(inv, c, "loot", Material.CHEST);
+        placeButton(inv, c, "update", Material.CLOCK);
+        placeButton(inv, c, "count", Material.NETHER_STAR);
+        return inv;
+    }
+
+    public Inventory buildLoot(Player player) {
+        FileConfiguration c = plugin.getConfigManager().getMenu();
+        String title = ColorUtil.colorize(c.getString("settings-menu.loot-title", "Настройка лута"));
+        int size = c.getInt("settings-menu.loot-size", 54);
         Inventory inv = plugin.getServer().createInventory(null, size, title);
         lastSlotMap.clear();
 
+        int reserved = size - 9;
         int slot = 0;
-        int reserved = size - 9; // нижний ряд под кнопки
         for (ArtifactItem item : plugin.getArtifactManager().getPool().values()) {
             if (slot >= reserved) break;
             inv.setItem(slot, buildIcon(item));
@@ -52,30 +59,82 @@ public class SettingsGUI {
             slot++;
         }
 
-        placeButton(inv, menuConfig, "save", org.bukkit.Material.LIME_DYE);
-        placeButton(inv, menuConfig, "reset", org.bukkit.Material.BARRIER);
-        placeButton(inv, menuConfig, "help", org.bukkit.Material.BOOK);
-
+        placeButton(inv, c, "save", Material.LIME_DYE);
+        placeButton(inv, c, "reset", Material.BARRIER);
+        placeButton(inv, c, "help", Material.BOOK);
         return inv;
     }
 
-    private void placeButton(Inventory inv, FileConfiguration menuConfig, String key, Material fallback) {
+    public Inventory buildUpdate(Player player) {
+        FileConfiguration c = plugin.getConfigManager().getMenu();
+        String title = ColorUtil.colorize(c.getString("settings-menu.update-title", "Настройка обновления"));
+        int size = c.getInt("settings-menu.update-size", 27);
+        Inventory inv = plugin.getServer().createInventory(null, size, title);
+
+        int minSlot = c.getInt("settings-menu.update-buttons.min.slot", 11);
+        int maxSlot = c.getInt("settings-menu.update-buttons.max.slot", 15);
+
+        inv.setItem(minSlot, new ItemBuilder(Material.CLOCK)
+                .name(c.getString("settings-menu.update-buttons.min.name", "&eМинимальное обновление"))
+                .lore(List.of(
+                        "&7Сейчас: &f" + plugin.getConfigManager().getConfig().getString("update-time.min", "1h"),
+                        "&8ЛКМ — изменить через чат"
+                )).build());
+
+        inv.setItem(maxSlot, new ItemBuilder(Material.CLOCK)
+                .name(c.getString("settings-menu.update-buttons.max.name", "&eМаксимальное обновление"))
+                .lore(List.of(
+                        "&7Сейчас: &f" + plugin.getConfigManager().getConfig().getString("update-time.max", "7d"),
+                        "&8ЛКМ — изменить через чат"
+                )).build());
+        return inv;
+    }
+
+    public Inventory buildCount(Player player) {
+        FileConfiguration c = plugin.getConfigManager().getMenu();
+        String title = ColorUtil.colorize(c.getString("settings-menu.count-title", "Количество артефактов"));
+        int size = c.getInt("settings-menu.count-size", 27);
+        Inventory inv = plugin.getServer().createInventory(null, size, title);
+
+        int minSlot = c.getInt("settings-menu.count-buttons.min.slot", 11);
+        int maxSlot = c.getInt("settings-menu.count-buttons.max.slot", 15);
+
+        inv.setItem(minSlot, new ItemBuilder(Material.CHEST)
+                .name(c.getString("settings-menu.count-buttons.min.name", "&eМинимальное количество"))
+                .lore(List.of(
+                        "&7Сейчас: &f" + plugin.getConfigManager().getConfig().getInt("artifact-count.min", 1),
+                        "&8ЛКМ — изменить через чат"
+                )).build());
+
+        inv.setItem(maxSlot, new ItemBuilder(Material.CHEST)
+                .name(c.getString("settings-menu.count-buttons.max.name", "&eМаксимальное количество"))
+                .lore(List.of(
+                        "&7Сейчас: &f" + plugin.getConfigManager().getConfig().getInt("artifact-count.max", 5),
+                        "&8ЛКМ — изменить через чат"
+                )).build());
+        return inv;
+    }
+
+    private void placeButton(Inventory inv, FileConfiguration c, String key, Material fallback) {
         String base = "settings-menu.buttons." + key;
-        int slot = menuConfig.getInt(base + ".slot", -1);
-        if (slot < 0) return;
-        Material material = Material.matchMaterial(menuConfig.getString(base + ".material", fallback.name()));
+        int slot = c.getInt(base + ".slot", -1);
+        if (slot < 0 || slot >= inv.getSize()) return;
+        Material material = Material.matchMaterial(c.getString(base + ".material", fallback.name()));
         if (material == null) material = fallback;
-        String name = menuConfig.getString(base + ".name", key);
-        List<String> lore = menuConfig.getStringList(base + ".lore");
+        String name = c.getString(base + ".name", key);
+        List<String> lore = c.getStringList(base + ".lore");
         inv.setItem(slot, new ItemBuilder(material).name(name).lore(lore).build());
     }
 
     private ItemStack buildIcon(ArtifactItem item) {
-        String name = "&f" + item.getMaterial().name();
+        String name = "&f" + item.getMaterial().name().replace("_", " ");
         List<String> lore = new ArrayList<>();
         lore.add("&7Цена: &a" + trim(item.getPrice()) + "$");
         lore.add("&7Лимит: &f" + item.getLimit());
-        lore.add("&7Статус: " + (item.isEnabled() ? "&aвключён" : "&cвыключен"));
+        lore.add("&8");
+        lore.add("&7Shift+ЛКМ — удалить");
+        lore.add("&7Shift+ПКМ — изменить цену");
+        lore.add("&7Колёсико — изменить лимит");
         return new ItemBuilder(item.getMaterial()).name(name).lore(lore).build();
     }
 

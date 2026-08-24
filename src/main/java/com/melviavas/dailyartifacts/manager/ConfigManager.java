@@ -1,6 +1,7 @@
 package com.melviavas.dailyartifacts.manager;
 
 import com.melviavas.dailyartifacts.DailyArtifactsPlugin;
+import com.melviavas.dailyartifacts.util.ColorUtil;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
@@ -75,6 +76,14 @@ public class ConfigManager {
     public String msg(String path) {
         String prefix = messages.getString("prefix", "");
         String raw = messages.getString("messages." + path, path);
-        return raw.replace("{prefix}", prefix);
+        return ColorUtil.colorize(raw.replace("{prefix}", prefix));
+    }
+
+    public void saveConfig() {
+        try {
+            plugin.getConfig().save(new File(plugin.getDataFolder(), "config.yml"));
+        } catch (IOException e) {
+            plugin.getLogger().log(Level.SEVERE, "Не удалось сохранить config.yml", e);
+        }
     }
 }
