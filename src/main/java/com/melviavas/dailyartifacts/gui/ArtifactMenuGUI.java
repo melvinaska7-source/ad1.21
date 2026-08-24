@@ -27,7 +27,9 @@ public class ArtifactMenuGUI {
         String title = ColorUtil.colorize(menuConfig.getString("menu.title", "Артефакты дня"));
         int size = menuConfig.getInt("menu.size", 45);
 
-        Inventory inv = plugin.getServer().createInventory(null, size, title);
+        GuiHolder holder = new GuiHolder(GuiHolder.Type.ARTIFACTS);
+        Inventory inv = plugin.getServer().createInventory(holder, size, title);
+        holder.setInventory(inv);
 
         if (menuConfig.getBoolean("menu.border.enabled", true)) {
             fillBorder(inv, menuConfig);
@@ -35,6 +37,13 @@ public class ArtifactMenuGUI {
 
         List<Integer> slots = menuConfig.getIntegerList("menu.artifact-slots");
         List<ArtifactItem> active = plugin.getArtifactManager().getActiveArtifacts();
+
+        // Если по какой-то причине состояние оказалось пустым (например, после
+        // ручного удаления state.yml), автоматически создаём новую ротацию.
+        if (active.isEmpty() && !plugin.getArtifactManager().getPool().isEmpty()) {
+            plugin.getArtifactManager().rotate();
+            active = plugin.getArtifactManager().getActiveArtifacts();
+        }
 
         for (int i = 0; i < active.size() && i < slots.size(); i++) {
             ArtifactItem item = active.get(i);

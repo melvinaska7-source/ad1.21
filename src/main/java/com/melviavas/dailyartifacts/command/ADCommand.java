@@ -35,6 +35,7 @@ public class ADCommand implements CommandExecutor, TabCompleter {
                     player.sendMessage(plugin.getConfigManager().msg("no-permission"));
                     return true;
                 }
+                plugin.getArtifactManager().ensureRotation();
                 player.openInventory(plugin.getArtifactMenuGUI().build(player));
             }
             case "settings" -> {
@@ -55,6 +56,7 @@ public class ADCommand implements CommandExecutor, TabCompleter {
                 }
                 plugin.getConfigManager().reloadAll();
                 plugin.getArtifactManager().loadPool();
+                plugin.getArtifactManager().ensureRotation();
                 sender.sendMessage(plugin.getConfigManager().msg("reload-success"));
             }
             default -> sender.sendMessage(plugin.getConfigManager().msg("unknown-command"));

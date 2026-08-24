@@ -34,3 +34,5 @@ messages:
   enter-count-prompt: "{prefix}&eНапиши количество от &f1 &eдо &f5&e. Напиши &ccancel&e для отмены."
   value-updated: "{prefix}&aЗначение обновлено: &f{value}"
   invalid-number: "{prefix}&cЭто не похоже на число. Попробуй ещё раз."
+  artifacts-refreshed: "{prefix}&aАртефакты дня обновлены! Новый набор выбран."
+

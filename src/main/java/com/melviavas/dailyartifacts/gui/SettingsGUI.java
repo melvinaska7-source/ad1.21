@@ -25,8 +25,6 @@ import java.util.Map;
 public class SettingsGUI {
 
     private final DailyArtifactsPlugin plugin;
-    private final Map<Integer, String> lastSlotMap = new LinkedHashMap<>();
-
     public SettingsGUI(DailyArtifactsPlugin plugin) {
         this.plugin = plugin;
     }
@@ -35,11 +33,14 @@ public class SettingsGUI {
         FileConfiguration c = plugin.getConfigManager().getMenu();
         String title = ColorUtil.colorize(c.getString("settings-menu.title", "Настройки Daily Artifacts"));
         int size = c.getInt("settings-menu.size", 27);
-        Inventory inv = plugin.getServer().createInventory(null, size, title);
+        GuiHolder holder = new GuiHolder(GuiHolder.Type.SETTINGS);
+        Inventory inv = plugin.getServer().createInventory(holder, size, title);
+        holder.setInventory(inv);
 
         placeButton(inv, c, "loot", Material.CHEST);
         placeButton(inv, c, "update", Material.CLOCK);
         placeButton(inv, c, "count", Material.NETHER_STAR);
+        placeButton(inv, c, "refresh", Material.COMPASS);
         return inv;
     }
 
@@ -47,15 +48,16 @@ public class SettingsGUI {
         FileConfiguration c = plugin.getConfigManager().getMenu();
         String title = ColorUtil.colorize(c.getString("settings-menu.loot-title", "Настройка лута"));
         int size = c.getInt("settings-menu.loot-size", 54);
-        Inventory inv = plugin.getServer().createInventory(null, size, title);
-        lastSlotMap.clear();
+        GuiHolder holder = new GuiHolder(GuiHolder.Type.LOOT);
+        Inventory inv = plugin.getServer().createInventory(holder, size, title);
+        holder.setInventory(inv);
 
         int reserved = size - 9;
         int slot = 0;
         for (ArtifactItem item : plugin.getArtifactManager().getPool().values()) {
             if (slot >= reserved) break;
             inv.setItem(slot, buildIcon(item));
-            lastSlotMap.put(slot, item.getId());
+            holder.getSlotIds().put(slot, item.getId());
             slot++;
         }
 
@@ -69,7 +71,9 @@ public class SettingsGUI {
         FileConfiguration c = plugin.getConfigManager().getMenu();
         String title = ColorUtil.colorize(c.getString("settings-menu.update-title", "Настройка обновления"));
         int size = c.getInt("settings-menu.update-size", 27);
-        Inventory inv = plugin.getServer().createInventory(null, size, title);
+        GuiHolder holder = new GuiHolder(GuiHolder.Type.UPDATE);
+        Inventory inv = plugin.getServer().createInventory(holder, size, title);
+        holder.setInventory(inv);
 
         int minSlot = c.getInt("settings-menu.update-buttons.min.slot", 11);
         int maxSlot = c.getInt("settings-menu.update-buttons.max.slot", 15);
@@ -94,7 +98,9 @@ public class SettingsGUI {
         FileConfiguration c = plugin.getConfigManager().getMenu();
         String title = ColorUtil.colorize(c.getString("settings-menu.count-title", "Количество артефактов"));
         int size = c.getInt("settings-menu.count-size", 27);
-        Inventory inv = plugin.getServer().createInventory(null, size, title);
+        GuiHolder holder = new GuiHolder(GuiHolder.Type.COUNT);
+        Inventory inv = plugin.getServer().createInventory(holder, size, title);
+        holder.setInventory(inv);
 
         int minSlot = c.getInt("settings-menu.count-buttons.min.slot", 11);
         int maxSlot = c.getInt("settings-menu.count-buttons.max.slot", 15);
@@ -150,7 +156,7 @@ public class SettingsGUI {
     }
 
     public String getIdForSlot(int slot) {
-        return lastSlotMap.get(slot);
+        return null; // slot mapping is stored in the GUI holder per viewer
     }
 
     private String trim(double v) {

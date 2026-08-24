@@ -43,6 +43,14 @@ public class ChatInputListener implements Listener {
                         player.sendMessage(plugin.getConfigManager().msg("value-updated")
                                 .replace("{value}", raw));
                     }
+                    case LIMIT -> {
+                        int value = Integer.parseInt(raw);
+                        if (value < 1) throw new NumberFormatException();
+                        ArtifactItem item = plugin.getArtifactManager().getById(request.artifactId());
+                        if (item == null) return;
+                        plugin.getArtifactManager().addOrUpdateItem(request.artifactId(), item.getMaterial(), item.getPrice(), value);
+                        player.sendMessage(plugin.getConfigManager().msg("value-updated").replace("{value}", String.valueOf(value)));
+                    }
                     case UPDATE_MIN, UPDATE_MAX -> {
                         long millis = com.melviavas.dailyartifacts.util.TimeUtil.parseDuration(raw);
                         if (millis <= 0) throw new NumberFormatException();

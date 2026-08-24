@@ -36,6 +36,11 @@ public class DailyArtifactsPlugin extends JavaPlugin {
 
         economyManager = new EconomyManager(this);
         economyManager.setup();
+        // Некоторые экономические плагины регистрируют Vault provider после onEnable.
+        // Поэтому несколько раз пробуем подключиться, не требуя перезапуска сервера.
+        getServer().getScheduler().runTaskTimer(this, () -> {
+            if (!economyManager.isReady()) economyManager.trySetup(false);
+        }, 20L, 100L);
 
         permissionManager = new PermissionManager(this);
         chatInputManager = new ChatInputManager();

@@ -40,8 +40,14 @@ public class ArtifactManager {
         long savedNext = plugin.getDataManager().getNextUpdateEpoch();
         List<String> savedActive = plugin.getDataManager().getActiveArtifactIds();
 
-        if (savedNext > System.currentTimeMillis() && !savedActive.isEmpty()) {
-            this.activeIds = new ArrayList<>(savedActive);
+        List<String> validSaved = new ArrayList<>();
+        for (String id : savedActive) {
+            ArtifactItem item = pool.get(id);
+            if (item != null && item.isEnabled()) validSaved.add(id);
+        }
+
+        if (savedNext > System.currentTimeMillis() && !validSaved.isEmpty()) {
+            this.activeIds = validSaved;
             this.nextUpdateEpoch = savedNext;
         } else {
             rotate();
@@ -114,6 +120,16 @@ public class ArtifactManager {
 
         plugin.getLogger().info("DailyArtifacts: новая ротация — " + activeIds
                 + " (следующая через " + (duration / 60000) + " мин.)");
+    }
+
+    /**
+     * Гарантирует, что при наличии активного пула есть хотя бы одна ротация.
+     * Используется командами/GUI после reload или ручного изменения файлов.
+     */
+    public void ensureRotation() {
+        if (activeIds.isEmpty() || nextUpdateEpoch <= System.currentTimeMillis()) {
+            rotate();
+        }
     }
 
     public List<ArtifactItem> getActiveArtifacts() {

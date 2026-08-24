@@ -88,6 +88,20 @@ permissions:
   settings-groups: [admin, staff]
   menu-groups: [default, admin, vip, premium, staff]
 
+
+# ==========================================
+#                 ЭКОНОМИКА
+# ==========================================
+# Сначала плагин пытается найти Economy-провайдер через Vault.
+# Если Vault/провайдер не найден, можно использовать консольную команду.
+# Для EssentialsX по умолчанию подходит: eco give {player} {amount}
+# {player} = ник игрока, {amount} = сумма без форматирования.
+economy:
+  vault: true
+  command-fallback:
+    enabled: true
+    command: "eco give {player} {amount}"
+
 # ==========================================
 #              ЦВЕТОВОЙ ФОРМАТ
 # ==========================================

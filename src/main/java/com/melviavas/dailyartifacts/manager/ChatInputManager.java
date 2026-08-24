@@ -7,7 +7,7 @@ import java.util.UUID;
 /** Хранит ожидаемый ввод значения из чата. */
 public class ChatInputManager {
 
-    public enum Type { PRICE, UPDATE_MIN, UPDATE_MAX, COUNT_MIN, COUNT_MAX }
+    public enum Type { PRICE, LIMIT, UPDATE_MIN, UPDATE_MAX, COUNT_MIN, COUNT_MAX }
 
     public record Request(Type type, String artifactId) {}
 
@@ -15,6 +15,10 @@ public class ChatInputManager {
 
     public void requestPrice(UUID playerId, String artifactId) {
         pending.put(playerId, new Request(Type.PRICE, artifactId));
+    }
+
+    public void requestLimit(UUID playerId, String artifactId) {
+        pending.put(playerId, new Request(Type.LIMIT, artifactId));
     }
 
     public void request(UUID playerId, Type type) {
